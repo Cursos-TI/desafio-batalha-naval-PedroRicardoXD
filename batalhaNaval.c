@@ -1,76 +1,117 @@
 #include <stdio.h>
 
 #define TABULEIRO 10
-#define NAVIO 3  // Valor que representa o navio no tabuleiro
+#define NAVIO 3
 
-//  Funções de posicionamento 
+// Tipos de habilidades (cada número representa uma bomba diferente)
 
-// Posição Horizontal: linha fixa, coluna aumenta
+#define BOMBA_CONE 1
+#define BOMBA_CRUZ 2
+#define BOMBA_OCTAEDRO 3
+
 void posicionarHorizontal(int tabuleiro[TABULEIRO][TABULEIRO], int linha, int col_inicio) {
-    for (int i = 0; i < NAVIO; i++) {
+    for (int i = 0; i < NAVIO; i++)
         tabuleiro[linha][col_inicio + i] = NAVIO;
-    }
 }
 
-// Posição Vertical: coluna fixa, linha aumenta
 void posicionarVertical(int tabuleiro[TABULEIRO][TABULEIRO], int linha_inicio, int coluna) {
-    for (int i = 0; i < NAVIO; i++) {
+    for (int i = 0; i < NAVIO; i++)
         tabuleiro[linha_inicio + i][coluna] = NAVIO;
-    }
 }
 
-// Diagonal para a direita  (linha e coluna aumentam)
 void posicionarDiagonalDireita(int tabuleiro[TABULEIRO][TABULEIRO], int linha_inicio, int col_inicio) {
-    for (int i = 0; i < NAVIO; i++) {
+    for (int i = 0; i < NAVIO; i++)
         tabuleiro[linha_inicio + i][col_inicio + i] = NAVIO;
-    }
 }
 
-// Diagonal para a esquerda  (linha aumenta, coluna diminui)
 void posicionarDiagonalEsquerda(int tabuleiro[TABULEIRO][TABULEIRO], int linha_inicio, int col_inicio) {
-    for (int i = 0; i < NAVIO; i++) {
+    for (int i = 0; i < NAVIO; i++)
         tabuleiro[linha_inicio + i][col_inicio - i] = NAVIO;
+}
+
+// Função para aplicar uma habilidade no tabuleiro de bombas
+
+void aplicarHabilidade(int tabuleiro_bombas[TABULEIRO][TABULEIRO], int forma[5][5], int linha_centro, int coluna_centro, int tipo_bomba) {
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            if (forma[i][j] == 1) {
+                int linha = linha_centro - 2 + i;
+                int coluna = coluna_centro - 2 + j;
+                if (linha >= 0 && linha < TABULEIRO && coluna >= 0 && coluna < TABULEIRO) {
+                    tabuleiro_bombas[linha][coluna] = tipo_bomba;
+                }
+            }
+        }
     }
 }
 
-//  Função principal 
 int main() {
-    int tabuleiro[TABULEIRO][TABULEIRO];
+    int tabuleiro_navios[TABULEIRO][TABULEIRO] = {0};
+    int tabuleiro_bombas[TABULEIRO][TABULEIRO] = {0};
 
-    // Inicializar com água (0)
-    for (int i = 0; i < TABULEIRO; i++)
-        for (int j = 0; j < TABULEIRO; j++)
-            tabuleiro[i][j] = 0;
+    // Posicionar navios
 
-    //  Coordenadas dos navios 
+    posicionarHorizontal(tabuleiro_navios, 0, 3);
+    posicionarVertical(tabuleiro_navios, 6, 8);
+    posicionarDiagonalEsquerda(tabuleiro_navios, 1, 3);
+    posicionarDiagonalDireita(tabuleiro_navios, 5, 0);
 
-    // Horizontal em D5, D6, D7 → linha 3, coluna 4
-    posicionarHorizontal(tabuleiro, 3, 4);
+    // Formas das habilidades
+    
+    int cone[5][5] = {
+        {0, 0, 1, 0, 0},
+        {0, 1, 1, 1, 0},
+        {1, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0}
+    };
 
-    // Vertical em G9, H9, I9 → linha 6, coluna 8
-    posicionarVertical(tabuleiro, 6, 8);
+    int cruz[5][5] = {
+        {0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0},
+        {1, 1, 1, 1, 1},
+        {0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0}
+    };
 
-    // Diagonal esquerda
-    posicionarDiagonalEsquerda(tabuleiro, 1, 3);
+    int octaedro[5][5] = {
+        {0, 0, 1, 0, 0},
+        {0, 1, 1, 1, 0},
+        {1, 1, 1, 1, 1},
+        {0, 1, 1, 1, 0},
+        {0, 0, 1, 0, 0}
+    };
 
-    // Diagonal direita
-    posicionarDiagonalDireita(tabuleiro, 5, 0);
+    // Aplicar habilidades (em posições diferentes)
+    
+    aplicarHabilidade(tabuleiro_bombas, cone, 2, 7, BOMBA_CONE);
+    aplicarHabilidade(tabuleiro_bombas, cruz, 5, 5, BOMBA_CRUZ);
+    aplicarHabilidade(tabuleiro_bombas, octaedro, 8, 2, BOMBA_OCTAEDRO);
 
-    //  Exibir Cabeçalho de colunas 
+    // Cabeçalho
+    
     printf("  ");
     for (int col = 1; col <= TABULEIRO; col++)
         printf("%2d ", col);
     printf("\n");
 
-    //  Exibir o Tabuleiro 
+    // Impressão do tabuleiro
     for (int i = 0; i < TABULEIRO; i++) {
-        printf("%c  ", 'A' + i);  // Letras das linhas
-
+        printf("%c  ", 'A' + i);
         for (int j = 0; j < TABULEIRO; j++) {
-            if (tabuleiro[i][j] == 0)
-                printf("0  ");  // Água
-            else
-                printf("3  ");  // Parte do navio
+            if (tabuleiro_navios[i][j] == NAVIO && tabuleiro_bombas[i][j] != 0) {
+                printf("X  "); // Navio atingido (visual, mas sem efeito real)
+            } else if (tabuleiro_navios[i][j] == NAVIO) {
+                printf("3  "); // Navio
+            } else if (tabuleiro_bombas[i][j] == BOMBA_CONE) {
+                printf("C  "); // Cone
+            } else if (tabuleiro_bombas[i][j] == BOMBA_CRUZ) {
+                printf("+  "); // Cruz
+            } else if (tabuleiro_bombas[i][j] == BOMBA_OCTAEDRO) {
+                printf("O  "); // Octaedro
+            } else {
+                printf("0  "); // Água
+            }
         }
         printf("\n");
     }
